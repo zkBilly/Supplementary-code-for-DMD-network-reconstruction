@@ -1,18 +1,10 @@
 clear all
 
-%推断包含41个社团的大型网络
-%生成一般FHN模型膜电位变化轨迹
 T = 100000; %100000
 time_step = 0.01;  %演化的时间步长
 N = 100;
 rng(20)
 
-% 生成WS小世界网络
-% k = 2;
-% beta = 0.2;  % 重连概率为0.05时小世界性最强
-% SmallWorld_network = WattsStrogatz(N,k,beta);
-% adjacency_matrix = full(adjacency(SmallWorld_network));
-% 加载之前生成过的小世界SmallWorld_adjacency_matrix_p=0.05/无标度ScaleFree_adjacency_matrix网络
 adjacency_matrix = load('.\SmallWorld_adjacency_matrix_k=4_p=0.2_lap.mat');
 adjacency_matrix = adjacency_matrix.adjacency_matrix;
 coupling_strength = 0.1;  % 0.1
@@ -866,4 +858,5 @@ function dxyz = CL(xyz0, params)
         dz(i, 1) = x0(i)*y0(i)-b(i)*z0(i)+zj;
     end
     dxyz = [dx; dy; dz];
+
 end
