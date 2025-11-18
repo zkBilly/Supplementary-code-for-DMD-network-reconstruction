@@ -145,7 +145,7 @@ legend('13', '99', '68', '56')
 % plot(real(CL_Trajectory(1:100, 1:10)))
 % title('v')
 
-% Perform Koopman analysis on signal segment j and record
+%% Perform Koopman analysis on signal segment j and record
 % 1) Phase difference phase_difference_choose_j_n
 % 2) Amplitude attenuation amplitude_difference_choose_j_n
 % 3) Selected average frequency Average_frequency_choose_j
@@ -866,5 +866,6 @@ function plv = PLV(phase_sig1, phase_sig2)
     e = phase_sig1 ./ phase_sig2;
     plv = abs(sum(e)) / Ntrials;
 end
+
 
 
