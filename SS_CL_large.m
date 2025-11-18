@@ -1,7 +1,7 @@
 clear all
 
 T = 100000; %100000
-time_step = 0.01;  %演化的时间步长
+time_step = 0.01;  % Time step for evolution
 N = 100;
 rng(20)
 
@@ -14,8 +14,8 @@ Laplace_matrix = coupling_strength * Laplace_matrix;
 [ACC, C] = avgClusteringCoefficient(adjacency_matrix);
 
 Koopman_time_step = 0.35;  % 0.35
-%若使用先前生成的数据，注释此段%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 设置CL模型的其他参数
+% If using previously generated data, comment out this section %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Set other parameters for CL model
 a = 10+(10-10).*rand(N,1);
 r = 20+(30-20).*rand(N,1);
 b = 8/3+(8/3-8/3).*rand(N,1);
@@ -26,7 +26,7 @@ progress = 0;
 for i = 2:round(T/time_step)
     if mod(i, round(T/time_step)/10) == 0
         progress = progress + 10;
-        disp(['仿真信号生成进度：', num2str(progress), '%'])
+        disp(['Simulation signal generation progress: ', num2str(progress), '%'])
     end
     CL_Trajectory(:, i) = Runge_Kutta(CL_Trajectory(:, i-1), params, time_step, @CL);
 end
@@ -41,11 +41,11 @@ plot_i = 75;
 plot3(CL_Trajectory(1:end, plot_i), CL_Trajectory(1:end, plot_i+N), CL_Trajectory(1:end, plot_i+2*N))
 hold on
 scatter3(CL_Trajectory(1, plot_i), CL_Trajectory(1, plot_i+N), CL_Trajectory(1, plot_i+2*N), 'r*')
-xlabel('X轴');
-ylabel('Y轴');
-zlabel('Z轴');
-title('Couple Lorenz');
-grid on; % 显示网格
+xlabel('X-axis');
+ylabel('Y-axis');
+zlabel('Z-axis');
+title('Coupled Lorenz');
+grid on; % Display grid
 
 figure(9)
 subplot(3,1,1)
@@ -58,39 +58,39 @@ subplot(3,1,3)
 plot(CL_Trajectory(end-1000:end, plot_i+2*N:plot_i+2*N))
 title('z')
 
-CL_Trajectory = CL_Trajectory(:, 1+2*N:3*N); % 只保留z维信号
+CL_Trajectory = CL_Trajectory(:, 1+2*N:3*N); % Only keep z-dimensional signal
 
-% %对Z轴投影信号作傅里叶变换
+% % Perform Fourier transform on Z-axis projection signal
 % fs = 2 * pi / time_step;
-% N = 10000;  %FFT长度N，之后沿用此值
+% N = 10000;  % FFT length N, continue using this value
 % n = 0 : N-1;
 % spectrum_f = n * fs / N - fs / 2;
 % spectrum = abs(fftshift(fft(CL_Trajectory(:, 1), N)));
 % figure(10)
 % stem(spectrum_f, spectrum, 'r')
-% title('FFT频谱')
-% xlabel('角频率')
-% ylabel('幅度')
+% title('FFT Spectrum')
+% xlabel('Angular Frequency')
+% ylabel('Amplitude')
 % xlim([-20, 20])
 
-% 运用希尔伯特变换，计算所有振子的平均频率
-% 进行希尔伯特变换之前，一定要去除信号中的直流分量
-dc_offset = mean(CL_Trajectory); % 计算直流分量（均值）
-CL_Trajectory = CL_Trajectory - dc_offset; % 从信号中减去直流分量
+% Use Hilbert transform to calculate average frequency of all oscillators
+% Before performing Hilbert transform, must remove DC component from signal
+dc_offset = mean(CL_Trajectory); % Calculate DC component (mean)
+CL_Trajectory = CL_Trajectory - dc_offset; % Subtract DC component from signal
 delete_t = 20;
 delete_step = delete_t / time_step;
 hilbert_CL_Traj = hilbert(CL_Trajectory);
 hilbert_CL_Traj = hilbert_CL_Traj(delete_step+1:end, :);
 phase = angle(hilbert_CL_Traj(2:end, :) ./ hilbert_CL_Traj(1:end-1, :));
-% 运用希尔伯特变换处理FHN膜电位数据，进而只保留相位信息舍弃幅度信息
+% Use Hilbert transform to process FHN membrane potential data, then only keep phase information and discard amplitude information
 CL_Trajectory = exp(1i*angle(hilbert_CL_Traj));
 
 figure(11)
 plot(real(CL_Trajectory(1:1001, plot_i)))
 hold on
-%进行Koopman分析时，增大选点的间隔
-% (n+m)*Koopman_time_step应大于最长的振子周期，
-% 1/Koopman_time_step应大于2*最大频率
+% When performing Koopman analysis, increase the interval for selecting points
+% (n+m)*Koopman_time_step should be greater than the longest oscillator period,
+% 1/Koopman_time_step should be greater than 2*maximum frequency
 jump_step = Koopman_time_step / time_step;
 if jump_step > 1
     Koopman_indices = find(mod(1:size(CL_Trajectory, 1), jump_step) == 1);
@@ -120,8 +120,8 @@ phase = phase.phase;
 
 segment_num = 5;
 shift_step = 1000; % 1000
-n = 5;  %可观测量维数指标（时间指标） 5
-m = 250000;  %可观测量数量指标 250000
+n = 5;  % Observable dimension 5
+m = 250000;  % time dimension 250000
 CL_Trajectory = CL_Trajectory(1:(n+m+(segment_num-1)*shift_step), :);
 phase = phase(1:(n+m+(segment_num-1)*shift_step-1), :);
 for i = 1:segment_num
@@ -145,16 +145,16 @@ legend('13', '99', '68', '56')
 % plot(real(CL_Trajectory(1:100, 1:10)))
 % title('v')
 
-%% 对信号片段j进行Koopman分析，并记录：
-% 1）相位差异phase_difference_choose_j_n
-% 2）幅度差异amplitude_difference_choose_j_n
-% 3）挑选出的平均频率Average_frequency_choose_j
+%% Perform Koopman analysis on signal segment j and record:
+% 1) Phase difference phase_difference_choose_j_n
+% 2) Amplitude difference amplitude_difference_choose_j_n
+% 3) Selected average frequency Average_frequency_choose_j
 for j = 1:segment_num
     j
     CL_seg = CL_Trajectory(1+(j-1)*shift_step:n+m+(j-1)*shift_step, :);
     Average_frequency = Average_frequency_all{j};
 
-    %取所有振子的状态构成(n*N)*m的Hankel矩阵，所用的数据长度为n+m
+    % Take states of all oscillators to form (n*N)*m Hankel matrix, data length used is n+m
     H = zeros(n * N, m+1);
     for k = 1:m+1
         for p =1:N
@@ -163,10 +163,10 @@ for j = 1:segment_num
     end
     clear CL_seg
     
-    %奇异值分解SVD
-    [U, S, V] = svd(H, 'econ');  %U是新的基，S*V'是坐标
+    % Singular Value Decomposition SVD
+    [U, S, V] = svd(H, 'econ');  % U is new basis, S*V' are coordinates
     clear H
-    %降维
+    % Dimensionality reduction
     % truncation_singular_value = 1e-3;
     truncation_singular_value = 0;
     for truncation_order = 1:size(S, 1)
@@ -179,40 +179,40 @@ for j = 1:segment_num
     S = S(1:truncation_order, 1:truncation_order);
     V = V(:, 1:truncation_order);
     
-    %计算Koopman算符在基矢U下的矩阵表示
+    % Calculate matrix representation of Koopman operator in basis U
     X = S * V(1:m, :)';
     Y = S * V(2:(m+1), :)';
-    K = Y * pinv(X);  %XX'接近奇异矩阵，因此用伪逆
+    K = Y * pinv(X);  % XX' is close to singular matrix, so use pseudo-inverse
     clear S V
     
-    %挑选法：求Koopman算符的本征值和本征向量
+    % Selection method: Find eigenvalues and eigenvectors of Koopman operator
     [eigenfunction, eigenvalue] = eig(K);
     clear K
     eigenvalue = diag(eigenvalue);
-    Frequency = angle(eigenvalue) / Koopman_time_step;  %这里求得的频率是角频率
-    %求Koopman算符的时域本征函数
-    eigenfunction = U * eigenfunction;  %同一列是同一频率，同一行是同一时刻
+    Frequency = angle(eigenvalue) / Koopman_time_step;  % Frequency obtained here is angular frequency
+    % Find time-domain eigenfunctions of Koopman operator
+    eigenfunction = U * eigenfunction;  % Same column is same frequency, same row is same time
     min_eigenvalue = 0.85;
     % figure(6)
     % stem(Frequency, abs(eigenvalue))
     % hold on
     % plot([min(Frequency), max(Frequency)], [min_eigenvalue, min_eigenvalue], 'r--')
-    % % title('模式频率及本征值幅值')
+    % % title('Mode frequency and eigenvalue magnitude')
     % xlabel('$\omega$', 'Interpreter', 'latex')
     % ylabel('$A$', 'Interpreter', 'latex')
     % title('$angular\ frequency\ and\ magnitude\ of\ eigenvalue$', 'Interpreter', 'latex')
     clear U
-    %新增：因为我们考虑的是稳定不衰减的振荡模式，因此需要剔除本征值中过于远离1的值
+    % New: Since we consider stable non-decaying oscillation modes, need to eliminate eigenvalues too far from 1
     Frequency = Frequency(abs(eigenvalue) > min_eigenvalue);
     eigenfunction = eigenfunction(:, abs(eigenvalue) > min_eigenvalue);
     eigenvalue = eigenvalue(abs(eigenvalue) > min_eigenvalue);
 
-    % 计算相位差异和幅度差异
+    % Calculate phase difference and amplitude difference
     Average_frequency_choose_j = zeros(size(Average_frequency));
     for centernode_n = 1:N
         Average_frequency_n = Average_frequency(centernode_n, 1);
         
-        % 幅度挑选法：从Koopman模式中挑选幅度最大的模式
+        % Amplitude selection method: Select mode with maximum amplitude from Koopman modes
         near_num = numel(Frequency);
         f_diffs = abs(Frequency - Average_frequency_n);
         [~, idx] = sort(f_diffs);
@@ -236,7 +236,7 @@ for j = 1:segment_num
         %     saveas(figure(7), ['./DMD_spectrum/',num2str(centernode_n),'.jpg']);
         % end
 
-        % 观察本征模式的形态
+        % Observe the shape of eigenmode
         % figure(8)
         % plot(abs(Average_frequency_eigenfunction_choose))
     
@@ -265,7 +265,7 @@ save('.\amplitude_difference_choose.mat', 'amplitude_difference_choose')
 save('.\phase_difference_choose.mat', 'phase_difference_choose')
 save('.\Average_frequency_choose.mat', 'Average_frequency_choose')
 
-%% 自动化判别网络结构算法
+%% Automated network structure discrimination algorithm
 adjacency_matrix = load('.\SmallWorld_adjacency_matrix_k=4_p=0.2_lap.mat');
 adjacency_matrix = adjacency_matrix.adjacency_matrix;
 Average_frequency = load('.\Average_frequency.mat');
@@ -275,16 +275,16 @@ amplitude_difference_choose = amplitude_difference_choose.amplitude_difference_c
 phase_difference_choose = load('.\phase_difference_choose.mat');
 phase_difference_choose = phase_difference_choose.phase_difference_choose;
 
-% 设定幅度衰减的最小阈值max_amplitude_difference，取值范围为(-inf, 0)，依据耦合强度增大而趋近于0
-mad = -0;  %大于此值则认为两振子发生了同步
-% 设定从三段信号求得的展现某一模式传播情况的(dp, da)点的最大欧氏距离max_distance
-mrms = 0.024;  %最大质心距离方差，大于此值则认为两节点间不存在连边
-acd = 1.5;  %幅度衰减的聚类距离amplitude_cluster_distance，取值为[0, inf]
+% Set minimum threshold for amplitude attenuation max_amplitude_difference, value range (-inf, 0), approaches 0 as coupling strength increases
+mad = -0;  % If greater than this value, consider two oscillators synchronized
+% Set maximum Euclidean distance max_distance for (dp, da) points showing mode propagation from three signal segments
+mrms = 0.024;  % Maximum centroid distance variance, if greater than this value, consider no edge between two nodes
+acd = 1.5;  % Amplitude attenuation clustering distance amplitude_cluster_distance, value range [0, inf]
 
 inference_adjacency_matrix = zeros(N);
-synchronize_pair = {};  %通过检验振幅的衰减情况来探明网络中的同步对
+synchronize_pair = {};  % Detect synchronized pairs in network by examining amplitude attenuation
 for centernode_n = 1:N
-    % 稳定性筛选：将三段信号得到的(dp, da)图画在同一平面上
+    % Stability screening: Plot (dp, da) obtained from three signal segments on same plane
     % figure(2)
     % scatter(phase_difference_choose{1, centernode_n}, amplitude_difference_choose{1, centernode_n}, 72, "red",'filled')
     % for n = 1:N
@@ -303,21 +303,21 @@ for centernode_n = 1:N
     % scatter(phase_difference_choose{3, centernode_n}, amplitude_difference_choose{3, centernode_n}, 72, "green",'o')
     % for n = 1:N
     %     phase_difference_choose_centernode_n = phase_difference_choose{3, centernode_n};
-    %     amplitude_difference_choose_centernode_n = amplitude_difference_choose{3, centernode_n};
+    %     amplitude_difference_choose
     %     text(phase_difference_choose_centernode_n(1, n), amplitude_difference_choose_centernode_n(1, n), ['  ', num2str(n)], 'Color', 'green')
     % end
     % legend('segment1', 'segment2', 'segment3')
-    % title('(da, dp)在平面上的分布')
-    % xlabel('相位差dp')
+    % title('Distribution of (da, dp) on plane')
+    % xlabel('Phase difference dp')
     % set(gca, 'XTick', (-pi) : pi/2 : pi)
     % set(gca, 'XTicklabel', {'-\pi', '-\pi/2', '0', '\pi/2', '\pi'})
     % xlim([-pi, pi])
-    % ylabel('振幅衰减log(da)')
+    % ylabel('Amplitude attenuation log(da)')
     % grid on
     % saveas(figure(2), ['.\result\', num2str(centernode_n), '.jpg'])
     % close(figure(2))
     % 
-    % % 新增：绘制单点
+    % % New: Plot single point
     % plot_n = 1;
     % figure(8)
     % scatter(phase_difference_choose{1, centernode_n}(plot_n), amplitude_difference_choose{1, centernode_n}(plot_n), 72, "red",'filled')
@@ -329,25 +329,25 @@ for centernode_n = 1:N
     % scatter(phase_difference_choose{3, centernode_n}(plot_n), amplitude_difference_choose{3, centernode_n}(plot_n), 72, "green",'o')
     % text(phase_difference_choose{3, centernode_n}(plot_n), amplitude_difference_choose{3, centernode_n}(plot_n), ['  ', num2str(plot_n)], 'Color', 'green')
     % legend('segment1', 'segment2', 'segment3')
-    % title('(da, dp)在平面上的分布')
-    % xlabel('相位差dp')
+    % title('Distribution of (da, dp) on plane')
+    % xlabel('Phase difference dp')
     % set(gca, 'XTick', (-pi) : pi/2 : pi)
     % set(gca, 'XTicklabel', {'-\pi', '-\pi/2', '0', '\pi/2', '\pi'})
     % xlim([-pi, pi])
     % ylim([-4, 0])
-    % ylabel('振幅衰减log(da)')
+    % ylabel('Amplitude attenuation log(da)')
     % grid on
 
-    % 同步检验：如果模式传播的幅度衰减程度过小，表现为大于mad，则认为两节点同步
+    % Synchronization test: If amplitude attenuation of mode propagation is too small, i.e., greater than mad, consider two nodes synchronized
     da_seg1_n = amplitude_difference_choose{1, centernode_n};
     for i = 1:N
-        % 如果固有频率过于接近导致同步发生（幅度衰减过小），则将二者加入同步对
+        % If natural frequencies are too close causing synchronization (amplitude attenuation too small), add both to synchronized pair
         if amplitude_difference_choose{1, centernode_n}(i)>=mad ...
                 && amplitude_difference_choose{2, centernode_n}(i)>=mad ...
                 && amplitude_difference_choose{3, centernode_n}(i)>=mad ...
                 && amplitude_difference_choose{4, centernode_n}(i)>=mad ...
                 && amplitude_difference_choose{5, centernode_n}(i)>=mad
-            % 新增：必须共用同一模式才算同步
+            % New: Must share same mode to be considered synchronized
             if Average_frequency_choose{1, 1}(centernode_n) == Average_frequency_choose{1, 1}(i) ...
                     && Average_frequency_choose{1, 2}(centernode_n) == Average_frequency_choose{1, 2}(i) ...
                     && Average_frequency_choose{1, 3}(centernode_n) == Average_frequency_choose{1, 3}(i) ...
@@ -355,16 +355,16 @@ for centernode_n = 1:N
                     && Average_frequency_choose{1, 5}(centernode_n) == Average_frequency_choose{1, 5}(i)
                 if centernode_n ~= i
                     synchronize_pair{end + 1} = [centernode_n, i];
-                    da_seg1_n(i) = NaN;  % 如果两振子同步了，就不再认为二者之间存在连边了
+                    da_seg1_n(i) = NaN;  % If two oscillators synchronized, no longer consider edge between them
                 else
-                    da_seg1_n(i) = NaN;  % 如果两振子同步了，就不再认为二者之间存在连边了
+                    da_seg1_n(i) = NaN;  % If two oscillators synchronized, no longer consider edge between them
                 end
             end
         end
     end
 
-    % % 第一步-稳定性筛选：计算第centernode_n个利用segment_num段信号计算的(dp, da)重叠图上同序号点到三点质心的最大欧氏距离max_distance_centroid
-    % % 小于md则认为分支节点接收到的中心节点的平均模式是稳定的，因此认为二者之间存在连边
+    % % Step 1 - Stability screening: Calculate maximum Euclidean distance max_distance_centroid from centroid for same index points on (dp, da) overlap plot for centernode_n using segment_num signal segments
+    % % If less than md, consider average mode from center node received by branch node is stable, therefore consider edge exists between them
     % max_distance_centroid = zeros(1, N);
     % for i = 1:N
     %     points = [phase_difference_choose{1, centernode_n}(i), da_seg1_n(i)];
@@ -384,8 +384,8 @@ for centernode_n = 1:N
     %     end
     % end
     
-    % 新增：第一步-稳定性筛选：计算第centernode_n个利用segment_num段信号计算的(dp,da)重叠图上同序号点到三点质心的距离的方差
-    % 如果该方差小于mcr则认为分支节点接收到的中心节点的平均模式是稳定的，因此认为二者之间存在连边
+    % New: Step 1 - Stability screening: Calculate variance of distances from centroid for same index points on (dp,da) overlap plot for centernode_n using segment_num signal segments
+    % If this variance is less than mcr, consider average mode from center node received by branch node is stable, therefore consider edge exists between them
     centroid_rms = zeros(1, N);
     for i = 1:N
         points = [phase_difference_choose{1, centernode_n}(i), da_seg1_n(i)];
@@ -395,7 +395,7 @@ for centernode_n = 1:N
        centroid_rms(i) = rmsOfDistanceFromCentroid(points); 
     end
     
-    % 新增：保存centroid_rms从小到大排列后原本对应的序号
+    % New: Save original indices corresponding to centroid_rms sorted in ascending order
     [centroid_rms_sort, centroid_rms_sort_indices] = sort(centroid_rms);
     centroid_rms_sort_result = [centroid_rms_sort; centroid_rms_sort_indices];
 
@@ -409,8 +409,8 @@ for centernode_n = 1:N
         end
     end
 
-    %↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓如果只进行稳定性筛选，注释此段↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-    % 第二步-幅度筛选：基于幅度衰减信息进一步用聚类算法筛选出衰减较小的节点
+    %↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓If only performing stability screening, comment this section↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+    % Step 2 - Amplitude screening: Further use clustering algorithm to screen nodes with smaller attenuation based on amplitude attenuation information
     current_cluster = [];
     current_cluster_size = 0;
     for j = 1:N
@@ -420,45 +420,45 @@ for centernode_n = 1:N
             if isempty(current_cluster)
                 current_cluster = [max(da_seg1_n)];
             else
-                % 计算当前数据与当前聚类中心的距离
+                % Calculate distance between current data and current cluster center
                 distance = abs(current_data - mean(current_cluster));
-                % 如果距离小于等于聚类距离，将数据加入当前聚类
+                % If distance <= clustering distance, add data to current cluster
                 if distance <= acd && distance ~= 0
                     current_cluster = [current_cluster, current_data];
                 end
             end
         end
-        %在数据量较少的情况下，需要补充扫描一次防止遗漏
+        % When data volume is small, need additional scan to prevent omissions
         current_cluster = unique(current_cluster);
         current_cluster_size = length(current_cluster);
         if current_cluster_size == former_size
             break
         end
     end
-    % 根据以上两步的结果构造邻接矩阵的第centernode_n行
+    % Construct row centernode_n of adjacency matrix based on above two steps results
     inference_adjacency_matrix(centernode_n, :) = ismember(da_seg1_n, current_cluster);
     inference_adjacency_matrix(centernode_n, centernode_n) = 0;
-    %↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑如果只进行稳定性筛选，注释此段↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+    %↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑If only performing stability screening, comment this section↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 end
 inference_adjacency_matrix(isnan(inference_adjacency_matrix)) = 0;
 
-% 第三步-对称性筛选：由于MS方法检验的是某一节点的运动对剩余节点动力学行为的影响，因此结果是单向的
-% 如果网络是无向网络，则将矩阵中所有的单向边双向化
+% Step 3 - Symmetry screening: Since MS method tests influence of one node's motion on dynamic behavior of remaining nodes, result is unidirectional
+% If network is undirected network, then make all unidirectional edges bidirectional in matrix
 for i = 1:N
     for j = 1:N
-        if inference_adjacency_matrix(i, j) ~= inference_adjacency_matrix(j, i)  % 如果推断矩阵不对称
-            %保留
+        if inference_adjacency_matrix(i, j) ~= inference_adjacency_matrix(j, i)  % If inference matrix is asymmetric
+            % Keep
             % inference_adjacency_matrix(i, j) = 1;
             % inference_adjacency_matrix(j, i) = 1;
-            %剔除
+            % Remove
             inference_adjacency_matrix(i, j) = 0;
             inference_adjacency_matrix(j, i) = 0;
         end
     end
 end
 
-% 第四步-为了适应耦合强度推断算法的需要，默认同步的节点之间存在连边
-% 同时，在节点层面要将同步节点的所有连边共享
+% Step 4 - To meet needs of coupling strength inference algorithm, default synchronized nodes have edges between them
+% Also, at node level, all edges of synchronized nodes should be shared
 % for pair_i = synchronize_pair
 %     pair = pair_i{1};
 %     inference_adjacency_matrix(pair(1), pair(2)) = 1;
@@ -473,7 +473,7 @@ end
 %     inference_adjacency_matrix(pair(2), pair(2)) = 0;
 % end
 
-%计算推断的准确性
+% Calculate inference accuracy
 TP = 0;
 FP = 0;
 TN = 0;
@@ -509,13 +509,13 @@ TN = TN / 2;
 FN = FN / 2;
 recall = TP / (TP + FN)
 precision = TP / (TP + FP)
-beta = 1;  %F-score的beta值，>1表示更看重recall，也就是希望漏判的目标边(FN)更少
+beta = 1;  % beta value for F-score, >1 means more emphasis on recall, i.e., hope for fewer missed target edges (FN)
 F_beta_score = ((1+beta^2)*TP)/((1+beta^2)*TP+beta^2*FN+FP)
 recall_node = TP_node ./ (TP_node + FN_node);
 precision_node = TP_node ./ (TP_node + FP_node);
 F_beta_score_node = ((1+beta^2)*TP_node)./((1+beta^2)*TP_node+beta^2*FN_node+FP_node);
 
-% 根据邻接矩阵绘制推断目标网络
+% Plot inferred target network based on adjacency matrix
 G1 = graph(adjacency_matrix);
 deg1 = degree(G1);
 edge_num = sum(deg1)/2;
@@ -530,7 +530,7 @@ nColors2 = deg2;
 
 figure(1);
 subplot(1, 2, 1)
-f1 = plot(G1, 'Layout', 'circle', 'NodeCData', nColors1); % 'force'布局可根据节点之间的连接力来布局节点
+f1 = plot(G1, 'Layout', 'circle', 'NodeCData', nColors1); % 'force' layout can layout nodes based on connection forces between nodes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 node_index = 1:N;
 label = arrayfun(@num2str, node_index, 'UniformOutput', false);
@@ -538,31 +538,31 @@ label = arrayfun(@num2str, node_index, 'UniformOutput', false);
 colormap parula
 clim(common_color_limits)
 labelnode(f1, 1:N, label)
-title('推断目标网络')
+title('Target Network for Inference')
 f1.NodeFontWeight = 'bold';
 f1.NodeLabelColor = 'r';
 colorbar
 subplot(1, 2, 2)
-f2 = plot(G2, 'Layout', 'circle', 'NodeCData', nColors2); % 'force'布局可根据节点之间的连接力来布局节点
+f2 = plot(G2, 'Layout', 'circle', 'NodeCData', nColors2); % 'force' layout can layout nodes based on connection forces between nodes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 F_beta_score_label = arrayfun(@num2str, round(F_beta_score_node, 2), 'UniformOutput', false);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 colormap parula
 clim(common_color_limits)
 labelnode(f2, 1:N, F_beta_score_label)
-title('推断结果网络')
+title('Inference Result Network')
 f2.NodeFontWeight = 'bold';
 f2.NodeLabelColor = 'r';
 colorbar
-% 双向图注释下面这部分
+% For directed graphs, comment the following part
 % f2.ArrowSize = 15;
 % f2.EdgeLabel = G2.Edges.Weight;
 % f2.EdgeFontSize = 10;
 % f2.EdgeLabelColor = 'black';
 
 %%
-%%%%%%%%%%合并同步团后重新计算推断的准确性%%%%%%%%%%
-% 新增：计算同步团内信号的PLV
+%%%%%%%%%% Recalculate inference accuracy after merging synchronization groups %%%%%%%%%%
+% New: Calculate PLV of signals within synchronization groups
 synchronize_frequency_diff = [];
 synchronize_PLV = [];
 for i = 1:size(synchronize_pair, 2)
@@ -571,12 +571,12 @@ for i = 1:size(synchronize_pair, 2)
         2*abs(synchronize_frequency_pair{i}(1)-synchronize_frequency_pair{i}(2))/ ...
         (synchronize_frequency_pair{i}(1)+synchronize_frequency_pair{i}(2))];
     synchronize_PLV = [synchronize_PLV, PLV(CL_Trajectory(:, synchronize_pair{i}(1)), ...
-        CL_Trajectory(:, synchronize_pair{i}(2)))];  % 新增：计算同步对的PLV
+        CL_Trajectory(:, synchronize_pair{i}(2)))];  % New: Calculate PLV of synchronized pairs
 end
 Average_synchronize_frequency_diff = mean(synchronize_frequency_diff);
 Average_synchronize_PLV = mean(synchronize_PLV);
 
-% 新增：计算所有信号之间PLV
+% New: Calculate PLV between all signals
 all_PLV = zeros(N);
 for i = 1:N
     for j = 1:N
@@ -589,10 +589,10 @@ for i = 1:N
 end
 Average_all_PLV = mean(mean(all_PLV));
 
-% 新增：根据频率去除错误判断的同步对
+% New: Remove incorrectly judged synchronized pairs based on frequency
 keep_index = [];
 for sfp = synchronize_frequency_pair
-    if abs(sfp{1}(1)-sfp{1}(2)) > 1 % 添加一层双保险
+    if abs(sfp{1}(1)-sfp{1}(2)) > 1 % Add extra insurance layer
         keep_index(end+1) = 0;
     else
         keep_index(end+1) = 1;
@@ -601,7 +601,6 @@ end
 keep_index = logical(keep_index);
 synchronize_pair = synchronize_pair(keep_index);
 synchronize_frequency_pair = synchronize_frequency_pair(keep_index);
-
 synchronize_group = synPair2synGroup(synchronize_pair);
 for i = 1:size(synchronize_group, 2)
     synchronize_frequency{i} = Average_frequency(synchronize_group{i}, 1);
@@ -611,7 +610,7 @@ merged_inference_adjacency_matrix = mergeSynchronizedNodeGroups(inference_adjace
 mergelabel = generateMergeLabel(node_index, synchronize_group);
 merge_N = size(merged_adjacency_matrix, 1);
 
-%计算推断的准确性
+% Calculate inference accuracy
 TP_m = 0;
 FP_m = 0;
 TN_m = 0;
@@ -647,13 +646,13 @@ TN_m = TN_m / 2;
 FN_m = FN_m / 2;
 recall_m = TP_m / (TP_m + FN_m)
 precision_m = TP_m / (TP_m + FP_m)
-beta = 1;  %F-score的beta值，>1表示更看重recall，也就是希望漏判的目标边(FN)更少
+beta = 1;  % beta value for F-score, >1 means more emphasis on recall, i.e., hope for fewer missed target edges (FN)
 F_beta_score_m = ((1+beta^2)*TP_m)/((1+beta^2)*TP_m+beta^2*FN_m+FP_m)
 recall_m_node = TP_m_node ./ (TP_m_node + FN_m_node);
 precision_m_node = TP_m_node ./ (TP_m_node + FP_m_node);
 F_beta_score_m_node = ((1+beta^2)*TP_m_node)./((1+beta^2)*TP_m_node+beta^2*FN_m_node+FP_m_node);
 
-% 根据同步邻接矩阵绘制推断目标网络
+% Plot inferred target network based on synchronized adjacency matrix
 G3 = graph(merged_adjacency_matrix);
 deg3 = degree(G3);
 edge_num_m = sum(deg3)/2;
@@ -668,7 +667,7 @@ nColors4 = deg4;
 
 figure(4);
 subplot(1, 2, 1)
-f3 = plot(G3, 'Layout', 'circle', 'NodeCData', nColors3); % 'force'布局可根据节点之间的连接力来布局节点
+f3 = plot(G3, 'Layout', 'circle', 'NodeCData', nColors3); % 'force' layout can layout nodes based on connection forces between nodes
 colormap parula
 clim(common_color_limits)
 labelnode(f3, 1:merge_N, mergelabel)
@@ -676,10 +675,10 @@ title('Target network after merging synchronize group', Interpreter='latex')
 f3.NodeFontWeight = 'bold';
 f3.NodeLabelColor = 'r';
 colorbar
-% 设置坐标轴标签字体样式
+% Set axis label font style
 set(gca,'fontsize', 12);
 subplot(1, 2, 2)
-f4 = plot(G4, 'Layout', 'circle', 'NodeCData', nColors4); % 'force'布局可根据节点之间的连接力来布局节点
+f4 = plot(G4, 'Layout', 'circle', 'NodeCData', nColors4); % 'force' layout can layout nodes based on connection forces between nodes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 F_beta_score_m_label = arrayfun(@num2str, round(F_beta_score_m_node, 2), 'UniformOutput', false);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -690,100 +689,100 @@ title('Result network after merging synchronize group', Interpreter='latex')
 f4.NodeFontWeight = 'bold';
 f4.NodeLabelColor = 'r';
 colorbar
-% 设置坐标轴标签字体样式
+% Set axis label font style
 set(gca,'fontsize', 12);
 
 toc
 
 function Rms = rmsOfDistanceFromCentroid(points)
-    % points 是一个包含n行2列的矩阵，每一行代表一个二维点的坐标 (x, y)
-    % 计算质心
-    centroid = mean(points, 1); % 按列求平均得到质心坐标
-    % 计算每个点到质心的距离
+    % points is a matrix containing n rows and 2 columns, each row represents coordinates (x, y) of a 2D point
+    % Calculate centroid
+    centroid = mean(points, 1); % Calculate centroid coordinates by column average
+    % Calculate distance from each point to centroid
     distances = pdist2(points, centroid);
-    % 找出距离质心最远的点的距离
+    % Find distance of farthest point from centroid
     Rms = rms(distances);
 end
 
 function synGroup = synPair2synGroup(synPair)
-    % inputGroups: 输入的数组组成的单元格数组
+    % inputGroups: input cell array of arrays
     synGroup = {};
 
     while ~isempty(synPair)
         currentGroup = synPair{1};
         synPair(1) = [];
 
-        % 查找与当前组有交集的其他组
+        % Find other groups intersecting with current group
         intersectingIndices = findIntersectingGroups(currentGroup, synPair);
 
-        % 合并有交集的组
+        % Merge intersecting groups
         while ~isempty(intersectingIndices)
             currentGroup = unique([currentGroup, cell2mat(synPair(intersectingIndices))]);
             synPair(intersectingIndices) = [];
             intersectingIndices = findIntersectingGroups(currentGroup, synPair);
         end
 
-        % 将当前组添加到结果中
+        % Add current group to result
         synGroup{end + 1} = currentGroup;
     end
 end
 
 function mergeLabel = generateMergeLabel(node_index, nodeGroupsToMerge)
-    % 生成同步团合并后的节点标签
-    % 合并node_index和nodeGroupsToMerge并剔除掉nodeGroupsToMerge中包含的node_index的元素
+    % Generate node labels after merging synchronization groups
+    % Merge node_index and nodeGroupsToMerge and remove elements in nodeGroupsToMerge that contain node_index elements
 
-    % 初始化结果数组
+    % Initialize result array
     mergeLabel = cell(1, length(nodeGroupsToMerge) + length(node_index));
 
-    % 处理label的元素
+    % Process label elements
     for i = 1:length(node_index)
         if ~any(cellfun(@(x) ismember(node_index(i), x), nodeGroupsToMerge))
             mergeLabel{i} = num2str(node_index(i));
         end
     end
 
-    % 处理nodeGroupsToMerge的元素
+    % Process nodeGroupsToMerge elements
     for i = 1:length(nodeGroupsToMerge)
         str = ['{', strjoin(arrayfun(@num2str, nodeGroupsToMerge{i}, 'UniformOutput', false), ', '), '}'];
         mergeLabel{length(node_index) + i} = str;
     end
 
-    % 移除空的元素
+    % Remove empty elements
     mergeLabel = mergeLabel(~cellfun('isempty', mergeLabel));
 end
 
 function mergedAdjMatrix = mergeSynchronizedNodeGroups(originalAdjMatrix, nodeGroupsToMerge, uniOption)
-    % originalAdjMatrix: 原始的邻接矩阵
-    % nodeGroupsToMerge: 要合并的节点组，每行是一个节点组
-    % uniOption：逻辑值，true表示合并后的邻接矩阵只表示边的存在，元素只包含{0,1}
-    % ..................false表示合并后的邻接矩阵中的耦合强度为原始矩阵对应边上耦合强度的和
+    % originalAdjMatrix: original adjacency matrix
+    % nodeGroupsToMerge: node groups to merge, each row is a node group
+    % uniOption: logical value, true means merged adjacency matrix only indicates edge existence, elements only contain {0,1}
+    % ..................false means coupling strength in merged adjacency matrix is sum of coupling strengths on corresponding edges in original matrix
 
-    % 复制原始邻接矩阵
+    % Copy original adjacency matrix
     mergedAdjMatrix = originalAdjMatrix;
 
-    % 遍历每个节点组，合并节点并保留连边信息
+    % Iterate through each node group, merge nodes and preserve edge information
     for i = 1:size(nodeGroupsToMerge, 2)
         nodeGroup = nodeGroupsToMerge{i};
 
-        % 合并节点
+        % Merge nodes
         mergedNode_row = sum(mergedAdjMatrix(nodeGroup, :), 1);
         mergedNode_column = sum(mergedAdjMatrix(:, nodeGroup), 2);
         
         if uniOption == true
-            % 将非零值设置为 1
+            % Set non-zero values to 1
             mergedNode_row = mergedNode_row ~= 0;
             mergedNode_column = mergedNode_column ~= 0;
         end
 
-        % 将合并后的节点添加到邻接矩阵
+        % Add merged node to adjacency matrix
         mergedAdjMatrix = [mergedAdjMatrix, mergedNode_column];
         mergedAdjMatrix = [mergedAdjMatrix; [mergedNode_row, 0]];
 
-        % 移除原始节点
+        % Remove original nodes
         mergedAdjMatrix(nodeGroup, :) = [];
         mergedAdjMatrix(:, nodeGroup) = [];
 
-        % 更新未合并的同步团中的节点序号
+        % Update node indices in unmerged synchronization groups
         for j = i+1:size(nodeGroupsToMerge, 2)
             nodeGroupsToMerge{j} = updateNodeIndices(nodeGroupsToMerge{j}, nodeGroup);
         end
@@ -791,7 +790,7 @@ function mergedAdjMatrix = mergeSynchronizedNodeGroups(originalAdjMatrix, nodeGr
 end
 
 function intersectingIndices = findIntersectingGroups(group, groups)
-    % 查找与给定组有交集的其他组的索引
+    % Find indices of other groups intersecting with given group
     intersectingIndices = [];
     for i = 1:length(groups)
         if any(ismember(groups{i}, group))
@@ -801,11 +800,11 @@ function intersectingIndices = findIntersectingGroups(group, groups)
 end
 
 function summedMatrix = sumMatrixByStep(matrix, jump_step)
-    % 确定新矩阵的尺寸
+    % Determine dimensions of new matrix
     numRows = ceil(size(matrix, 1) / jump_step);
     newMatrix = zeros(numRows, size(matrix, 2));
     
-    % 循环遍历原矩阵，按jump_step进行求和
+    % Iterate through original matrix, sum by jump_step
     for i = 1:numRows
         startRow = (i - 1) * jump_step + 1;
         endRow = min(i * jump_step, size(matrix, 1));
@@ -816,15 +815,15 @@ function summedMatrix = sumMatrixByStep(matrix, jump_step)
 end
 
 function updatedGroup = updateNodeIndices(group, removedNodes)
-    % 更新未合并的同步团中的节点序号
+    % Update node indices in unmerged synchronization groups
 
-    % 获取未合并的同步团中的节点在前一同步团合并后，旧序号到新序号的映射
+    % Get mapping from old indices to new indices for nodes in unmerged synchronization groups after previous synchronization group merge
     map = zeros(1, length(group));
     for i = 1:length(group)
         map(i) = sum(removedNodes < group(i));
     end
     
-    % 更新未合并的同步团中的节点序号
+    % Update node indices in unmerged synchronization groups
     updatedGroup = group - map;
 end
 
@@ -837,7 +836,7 @@ function x_n = Runge_Kutta(x_n_1, params, dt, ode)
 end
 
 function dxyz = CL(xyz0, params)
-    %params中包含{N, a, r, b, Laplace_matrix}
+    % params contains {N, a, r, b, Laplace_matrix}
     % delta = [];
     N = params{1};
     a = params{2};
