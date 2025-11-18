@@ -538,7 +538,7 @@ label = arrayfun(@num2str, node_index, 'UniformOutput', false);
 colormap parula
 clim(common_color_limits)
 labelnode(f1, 1:N, label)
-title('Target Network for Inference')
+title('Target Network')
 f1.NodeFontWeight = 'bold';
 f1.NodeLabelColor = 'r';
 colorbar
@@ -550,7 +550,7 @@ F_beta_score_label = arrayfun(@num2str, round(F_beta_score_node, 2), 'UniformOut
 colormap parula
 clim(common_color_limits)
 labelnode(f2, 1:N, F_beta_score_label)
-title('Inference Result Network')
+title('Resulting Network')
 f2.NodeFontWeight = 'bold';
 f2.NodeLabelColor = 'r';
 colorbar
@@ -671,7 +671,7 @@ f3 = plot(G3, 'Layout', 'circle', 'NodeCData', nColors3); % 'force' layout can l
 colormap parula
 clim(common_color_limits)
 labelnode(f3, 1:merge_N, mergelabel)
-title('Target network after merging synchronize group', Interpreter='latex')
+title('Target network after merging synchronized groups', Interpreter='latex')
 f3.NodeFontWeight = 'bold';
 f3.NodeLabelColor = 'r';
 colorbar
@@ -685,7 +685,7 @@ F_beta_score_m_label = arrayfun(@num2str, round(F_beta_score_m_node, 2), 'Unifor
 colormap parula
 clim(common_color_limits)
 labelnode(f4, 1:merge_N, F_beta_score_m_label)
-title('Result network after merging synchronize group', Interpreter='latex')
+title('Resulting network after merging synchronized groups', Interpreter='latex')
 f4.NodeFontWeight = 'bold';
 f4.NodeLabelColor = 'r';
 colorbar
@@ -857,5 +857,12 @@ function dxyz = CL(xyz0, params)
         dz(i, 1) = x0(i)*y0(i)-b(i)*z0(i)+zj;
     end
     dxyz = [dx; dy; dz];
+end
 
+function plv = PLV(phase_sig1, phase_sig2)
+    % Calculate PLV value between sequences, sequences are e^{j*phase}
+    Ntrials = max(size(phase_sig1));
+    % compute PLV
+    e = phase_sig1 ./ phase_sig2;
+    plv = abs(sum(e)) / Ntrials;
 end
